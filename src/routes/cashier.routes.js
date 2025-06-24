@@ -3,11 +3,21 @@ const { Router } = require('express');
 const CashierController = require('../controllers/CashierController');
 const ensureAuthenticated = require('../middlewares/ensureAuthenticated');
 
-const routes = new Router();
-routes.use(ensureAuthenticated);
+const cashierRouter = new Router();
 
-routes.get('/status', CashierController.status); // <-- ADICIONE ESTA LINHA
-routes.post('/open', CashierController.open);
-routes.post('/bleed', CashierController.bleed);
+cashierRouter.use(ensureAuthenticated);
 
-module.exports = routes;
+// --- ROTAS DE CONSULTA ---
+cashierRouter.get('/status', CashierController.status);
+cashierRouter.get('/status/movements', CashierController.showActiveSessionMovements);
+
+// --- ROTA QUE PRECISAMOS GARANTIR QUE EXISTA ---
+cashierRouter.get('/status/sales', CashierController.showActiveSessionSales); 
+
+
+// --- ROTAS DE AÇÃO ---
+cashierRouter.post('/open', CashierController.open);
+cashierRouter.post('/bleed', CashierController.bleed);
+cashierRouter.post('/close', CashierController.close);
+
+module.exports = cashierRouter;

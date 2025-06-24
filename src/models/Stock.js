@@ -1,4 +1,5 @@
 // src/models/Stock.js
+// ESTE CÓDIGO ESTÁ CORRETO
 const { Model, DataTypes } = require('sequelize');
 
 class Stock extends Model {

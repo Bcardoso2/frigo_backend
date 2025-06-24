@@ -14,18 +14,29 @@ class SaleController {
     const t = await sequelize.transaction(); // Inicia transação
 
     try {
-      const { forma_pagamento, itens } = req.body; // itens = [{ produto_id, quantidade }, ...]
+      // 1. RECEBE OS NOVOS CAMPOS DO FRONTEND
+      const { 
+        forma_pagamento, 
+        itens, // itens = [{ produto_id, quantidade, preco_unitario }, ...]
+        cliente_id, 
+        funcionario_crediario_nome, 
+        taxa_crediario 
+      } = req.body;
+      
       const usuario_id = req.user.id;
 
-      // 1. Verifica se o caixa está aberto
+      // 2. Verifica se o caixa está aberto
       const session = await CashierSession.findOne({ where: { status: 'ABERTO' } });
       if (!session) {
+        await t.rollback();
         return res.status(400).json({ error: 'Caixa está fechado. Abra o caixa para iniciar vendas.' });
       }
       
-      // 2. Valida o estoque de todos os itens ANTES de começar
+      // 3. Valida o estoque de todos os itens ANTES de começar
       const prateleira = await StockLocation.findOne({ where: { nome: 'PRATELEIRA' } });
-      let valor_total = 0;
+      if (!prateleira) {
+          throw new Error("Local 'PRATELEIRA' não encontrado. Verifique a configuração inicial.");
+      }
 
       for (const item of itens) {
         const produto = await Product.findByPk(item.produto_id);
@@ -38,27 +49,32 @@ class SaleController {
         if (!estoquePrateleira || estoquePrateleira.quantidade < item.quantidade) {
             throw new Error(`Estoque insuficiente para o produto "${produto.nome}" na prateleira.`);
         }
-        valor_total += produto.preco_venda * item.quantidade;
       }
       
-      // 3. Cria a Venda
+      // 4. CALCULA O VALOR TOTAL BASEADO NOS PREÇOS ENVIADOS (que já podem conter juros)
+      const valor_total = itens.reduce((total, item) => {
+          return total + (item.quantidade * item.preco_unitario);
+      }, 0);
+
+      // 5. CRIA A VENDA com os campos novos
       const sale = await Sale.create({
         usuario_id,
         sessao_caixa_id: session.id,
         valor_total,
         forma_pagamento,
+        cliente_id: cliente_id || null, // Salva o ID do cliente ou null
+        funcionario_crediario_nome: funcionario_crediario_nome || null,
+        taxa_crediario: taxa_crediario || null,
       }, { transaction: t });
 
-      // 4. Cria os Itens da Venda e atualiza o estoque
+      // 6. CRIA OS ITENS DA VENDA e atualiza o estoque
       for (const item of itens) {
-        const produto = await Product.findByPk(item.produto_id, { transaction: t });
-        
         await SaleItem.create({
           venda_id: sale.id,
           produto_id: item.produto_id,
           quantidade: item.quantidade,
-          preco_unitario: produto.preco_venda,
-          valor_subtotal: produto.preco_venda * item.quantidade,
+          preco_unitario: item.preco_unitario, // Usa o preço já ajustado que veio do frontend
+          valor_subtotal: item.quantidade * item.preco_unitario,
         }, { transaction: t });
 
         // Decrementa estoque da prateleira
@@ -70,7 +86,7 @@ class SaleController {
         await estoquePrateleira.save({ transaction: t });
       }
 
-      // 5. Cria o Movimento de Caixa
+      // 7. Cria o Movimento de Caixa
       await CashierMovement.create({
         sessao_caixa_id: session.id,
         usuario_id,
@@ -84,7 +100,7 @@ class SaleController {
 
     } catch (error) {
       await t.rollback(); // Erro! Desfaz tudo.
-      console.error(error);
+      console.error("ERRO AO FINALIZAR VENDA:", error);
       return res.status(400).json({ error: error.message || 'Falha ao processar venda.' });
     }
   }

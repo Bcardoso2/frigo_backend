@@ -7,6 +7,9 @@ class SaleItem extends Model {
       quantidade: DataTypes.DECIMAL(10, 3),
       preco_unitario: DataTypes.DECIMAL(10, 2),
       valor_subtotal: DataTypes.DECIMAL(10, 2),
+      // --- CAMPOS DE CHAVE ESTRANGEIRA ADICIONADOS AQUI ---
+      venda_id: DataTypes.INTEGER,
+      produto_id: DataTypes.INTEGER,
     }, {
       sequelize,
       tableName: 'vendas_itens',

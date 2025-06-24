@@ -18,6 +18,8 @@ class StockController {
       });
       return res.json(stock);
     } catch (error) {
+      // Linha crucial para depuração: imprime o erro detalhado no terminal do backend
+      console.error("ERRO AO BUSCAR ESTOQUE:", error); 
       return res.status(500).json({ error: 'Falha ao buscar estoque.' });
     }
   }
@@ -66,7 +68,8 @@ class StockController {
       return res.json({ message: 'Transferência realizada com sucesso.' });
     } catch (error) {
       await t.rollback(); // Desfaz a transação em caso de erro
-      console.error(error);
+      // Linha crucial para depuração: imprime o erro detalhado no terminal do backend
+      console.error("ERRO AO TRANSFERIR ESTOQUE:", error);
       return res.status(500).json({ error: 'Falha ao transferir estoque.' });
     }
   }

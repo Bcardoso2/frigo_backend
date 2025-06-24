@@ -4,9 +4,12 @@ const { Model, DataTypes } = require('sequelize');
 class CashierMovement extends Model {
   static init(sequelize) {
     super.init({
-      tipo_movimento: DataTypes.STRING, // 'ABERTURA', 'VENDA', 'SANGRIA', 'SUPRIMENTO'
+      tipo_movimento: DataTypes.STRING,
       valor: DataTypes.DECIMAL(10, 2),
       descricao: DataTypes.TEXT,
+      // --- CAMPOS DE CHAVE ESTRANGEIRA ADICIONADOS AQUI ---
+      sessao_caixa_id: DataTypes.INTEGER,
+      usuario_id: DataTypes.INTEGER,
     }, {
       sequelize,
       tableName: 'movimentos_caixa',

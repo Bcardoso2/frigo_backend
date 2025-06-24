@@ -11,9 +11,20 @@ const CashierSession = require('../models/CashierSession');
 const CashierMovement = require('../models/CashierMovement');
 const Sale = require('../models/Sale');
 const SaleItem = require('../models/SaleItem');
+const Client = require('../models/Client'); // <-- PASSO 1: IMPORTE O MODEL CLIENT
 
 // Coloca todos os models em um array
-const models = [User, Product, StockLocation, Stock, CashierSession, CashierMovement, Sale, SaleItem];
+const models = [
+  User,
+  Product,
+  StockLocation,
+  Stock,
+  CashierSession,
+  CashierMovement,
+  Sale,
+  SaleItem,
+  Client, // <-- PASSO 2: ADICIONE O MODEL CLIENT AO ARRAY
+];
 
 class Database {
   constructor() {
