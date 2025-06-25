@@ -8,6 +8,7 @@ const productsRouter = require('./products.routes');
 const stockRouter = require('./stock.routes');
 const cashierRouter = require('./cashier.routes');
 const salesRouter = require('./sales.routes');
+const clientsRouter = require('./clients.routes');
 
 const routes = Router();
 
@@ -18,5 +19,6 @@ routes.use('/products', productsRouter);
 routes.use('/stock', stockRouter);
 routes.use('/cashier', cashierRouter);
 routes.use('/sales', salesRouter);
+routes.use('/clients', clientsRouter); // <-- REGISTRA AS ROTAS DE CLIENTES
 
 module.exports = routes;
