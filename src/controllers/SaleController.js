@@ -19,17 +19,37 @@ class SaleController {
    */
   async index(req, res) {
     try {
-      const { startDate, endDate } = req.query;
+      // 1. Captura todos os possíveis filtros da URL
+      const { 
+        startDate, endDate, paymentMethod, 
+        clienteId, minValue, maxValue 
+      } = req.query;
       
       const whereClause = {};
 
+      // 2. Constrói a cláusula 'where' dinamicamente
       if (startDate && endDate) {
-        // new Date() interpreta a string de data e hora completa enviada pelo frontend
-        whereClause.created_at = {
-          [Op.between]: [new Date(startDate), new Date(endDate)]
-        };
+        whereClause.created_at = { [Op.between]: [new Date(startDate), new Date(endDate)] };
       }
+      if (paymentMethod) {
+        whereClause.forma_pagamento = paymentMethod;
+      }
+      if (clienteId) {
+        whereClause.cliente_id = clienteId;
+      }
+      if (minValue) {
+        // gte = Greater Than or Equal (maior ou igual a)
+        whereClause.valor_total = { ...whereClause.valor_total, [Op.gte]: parseFloat(minValue) };
+      }
+      if (maxValue) {
+        // lte = Less Than or Equal (menor ou igual a)
+        whereClause.valor_total = { ...whereClause.valor_total, [Op.lte]: parseFloat(maxValue) };
+      }
+      
+      // Para depuração: veja no terminal do backend quais filtros estão a ser aplicados
+      console.log("Cláusula de filtro aplicada:", whereClause);
 
+      // 3. Executa a busca com os filtros construídos
       const sales = await Sale.findAll({
         where: whereClause,
         include: [
